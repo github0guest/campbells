@@ -1,3 +1,5 @@
+import ssl
+
 from bs4 import BeautifulSoup
 import requests
 import time
@@ -11,14 +13,15 @@ conn = sqlite3.connect('foxtrot.db')
 
 def warm_up_soup(start_url):
     date_url = start_url
+    # try:
     while True:
+        print(date_url)
+        time.sleep(5)
         try:
             page = requests.get(base_url + date_url)
         except requests.RequestException as ex:
             print(ex)
-            continue
-        except TimeoutError as ex:
-            print(ex)
+            print("Error on date: %s" % date_url)
             continue
         soup = BeautifulSoup(page.text, 'html.parser')
         # The div block that has all the good stuff
@@ -27,16 +30,44 @@ def warm_up_soup(start_url):
         transcript = select_image_div.attrs['data-transcript']
         # Image URL collected here first
         image_url = select_image_div.attrs['data-image']
+        if image_url == "https://assets.gocomics.com/content-error-missing-image.jpeg":
+            with open(download_directory + "missing_images.txt", 'w') as f:
+                f.write(date_url)
+            print("Error: Missing image")
+            try:
+                date_url = find_next_image(soup)
+            except DoneException:
+                break
+            continue
+        # try:
         image_response = requests.get(image_url)
+        # except ssl.CertificateError as err:
+        #     print(err)
+        #     print("Error on date: %s" % date_url)
+        #     continue
         if image_response.status_code == 200:
             download_image_update_db(date_url, image_response, transcript)
-        # Finds the next URL from the navigation button
-        select_next_div = soup.find('a', "fa btn btn-outline-secondary btn-circle fa-caret-right sm ")
-        if select_next_div is None:
+        try:
+            date_url = find_next_image(soup)
+        except DoneException:
             break
-        date_url = select_next_div.attrs['href']
-        time.sleep(5)
     conn.close()
+    # except TimeoutError as err:
+    #     print(err)
+    #     print("Error on date: %s" % date_url)
+    #     continue
+    # except KeyboardInterrupt as i:
+    #     print(i)
+    #     print("Interrupted on date %s" % date_url)
+    #     conn.close()
+
+
+def find_next_image(soup):
+    # Finds the next URL from the navigation button
+    select_next_div = soup.find('a', "fa btn btn-outline-secondary btn-circle fa-caret-right sm ")
+    if select_next_div is None:
+        raise DoneException()
+    return select_next_div.attrs['href']
 
 
 def download_image_update_db(url, image_response, transcript):
@@ -47,7 +78,7 @@ def download_image_update_db(url, image_response, transcript):
         f.write(image_response.content)
     # Insert the date and transcript into database
     # Convert date to Unix time
-    date = datetime.strptime("1988/04/11", '%Y/%m/%d')
+    date = datetime.strptime(date_slash, '%Y/%m/%d')
     unix_time = datetime(date.year, date.month, date.day, tzinfo=timezone.utc).timestamp()
     insert_row(unix_time, transcript, conn)
 
@@ -59,4 +90,8 @@ def insert_row(date, transcript, connection):
     connection.commit()
 
 
-warm_up_soup('/foxtrot/1988/04/11')
+class DoneException(Exception):
+    pass
+
+
+warm_up_soup('/foxtrot/1996/04/13')
