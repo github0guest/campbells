@@ -13,53 +13,39 @@ conn = sqlite3.connect('foxtrot.db')
 
 def warm_up_soup(start_url):
     date_url = start_url
-    # try:
-    while True:
-        print(date_url)
-        time.sleep(5)
-        try:
-            page = requests.get(base_url + date_url)
-        except requests.RequestException as ex:
-            print(ex)
-            print("Error on date: %s" % date_url)
-            continue
-        soup = BeautifulSoup(page.text, 'html.parser')
-        # The div block that has all the good stuff
-        select_image_div = soup.select_one('div[data-image]')
-        # Transcript collected here
-        transcript = select_image_div.attrs['data-transcript']
-        # Image URL collected here first
-        image_url = select_image_div.attrs['data-image']
-        if image_url == "https://assets.gocomics.com/content-error-missing-image.jpeg":
-            with open(download_directory + "missing_images.txt", 'w') as f:
-                f.write(date_url)
-            print("Error: Missing image")
+    with open(download_directory + "missing_images.txt", 'w') as f:
+        while True:
+            print(date_url)
+            time.sleep(5)
+            try:
+                page = requests.get(base_url + date_url)
+            except requests.RequestException as ex:
+                print(ex)
+                print("Error on date: %s" % date_url)
+                continue
+            soup = BeautifulSoup(page.text, 'html.parser')
+            # The div block that has all the good stuff
+            select_image_div = soup.select_one('div[data-image]')
+            # Transcript collected here
+            transcript = select_image_div.attrs['data-transcript']
+            # Image URL collected here first
+            image_url = select_image_div.attrs['data-image']
+            if image_url == "https://assets.gocomics.com/content-error-missing-image.jpeg":
+                f.write(date_url + "\n")
+                print("Error: Missing image")
+                try:
+                    date_url = find_next_image(soup)
+                except DoneException:
+                    break
+                continue
+            image_response = requests.get(image_url)
+            if image_response.status_code == 200:
+                download_image_update_db(date_url, image_response, transcript)
             try:
                 date_url = find_next_image(soup)
             except DoneException:
                 break
-            continue
-        # try:
-        image_response = requests.get(image_url)
-        # except ssl.CertificateError as err:
-        #     print(err)
-        #     print("Error on date: %s" % date_url)
-        #     continue
-        if image_response.status_code == 200:
-            download_image_update_db(date_url, image_response, transcript)
-        try:
-            date_url = find_next_image(soup)
-        except DoneException:
-            break
     conn.close()
-    # except TimeoutError as err:
-    #     print(err)
-    #     print("Error on date: %s" % date_url)
-    #     continue
-    # except KeyboardInterrupt as i:
-    #     print(i)
-    #     print("Interrupted on date %s" % date_url)
-    #     conn.close()
 
 
 def find_next_image(soup):
