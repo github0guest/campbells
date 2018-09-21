@@ -11,7 +11,7 @@ conn = sqlite3.connect('foxtrot.db')
 
 def warm_up_soup(start_url):
     date_url = start_url
-    with open(download_directory + "missing_images.txt", 'w') as f:
+    with open(download_directory + "missing_images.txt", 'a') as f:
         while True:
             time.sleep(5)
             try:
@@ -20,10 +20,20 @@ def warm_up_soup(start_url):
                 print(ex)
                 print("Error on date: %s" % date_url)
                 continue
+            except ConnectionError as err:
+                print(err)
+                print("Error on date: %s" % date_url)
+                continue
             # Page parsed for image URL and transcript
             soup = BeautifulSoup(page.text, 'html.parser')
             select_image_div = soup.select_one('div[data-image]')
-            transcript = select_image_div.attrs['data-transcript']
+            try:
+                transcript = select_image_div.attrs['data-transcript']
+            except AttributeError as err:
+                print(err)
+                print("Error on date: %s" % date_url)
+                date_url = find_next_date(soup)
+                continue
             image_url = select_image_div.attrs['data-image']
             # Missing images caught and dates noted
             if image_url == "https://assets.gocomics.com/content-error-missing-image.jpeg":
@@ -35,7 +45,16 @@ def warm_up_soup(start_url):
                     break
                 continue
             # Otherwise, image URL is considered valid and eventually downloaded/DB updated
-            image_response = requests.get(image_url)
+            try:
+                image_response = requests.get(image_url)
+            except requests.RequestException as ex:
+                print(ex)
+                print("Error on date: %s" % date_url)
+                continue
+            except ConnectionError as err:
+                print(err)
+                print("Error on date: %s" % date_url)
+                continue
             if image_response.status_code == 200:
                 download_image_update_db(date_url, image_response, transcript)
             try:
@@ -74,4 +93,4 @@ class DoneException(Exception):
     pass
 
 
-warm_up_soup('/foxtrot/1996/04/13')
+warm_up_soup('/foxtrot/2001/06/17')

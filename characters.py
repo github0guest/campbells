@@ -1,5 +1,6 @@
 import sqlite3
 import re
+from operator import itemgetter
 
 conn = sqlite3.connect('foxtrot.db')
 c = conn.cursor()
@@ -14,3 +15,5 @@ for row in c.execute('SELECT transcript FROM comics'):
         if w not in characters:
             characters[w] = 0
         characters[w] += 1
+
+newlist = sorted(characters, key=itemgetter())
