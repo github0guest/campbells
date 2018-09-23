@@ -11,9 +11,10 @@ characters = {}
 for row in c.execute('SELECT transcript FROM comics'):
     m = p.findall(row[0])
     for word in m:
-        w = str(word).rstrip(":")
+        w = str(word).rstrip(":").casefold().capitalize()
         if w not in characters:
             characters[w] = 0
         characters[w] += 1
 
-newlist = sorted(characters, key=itemgetter())
+sorted_list = sorted(characters.items(), key=itemgetter(1), reverse=True)
+print(sorted_list)
