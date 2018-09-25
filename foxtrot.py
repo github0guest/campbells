@@ -9,11 +9,13 @@ base_url = 'https://www.gocomics.com'
 conn = sqlite3.connect('foxtrot.db')
 
 
-def warm_up_soup(start_url):
+def main(start_url):
     date_url = start_url
     with open(download_directory + "missing_images.txt", 'a') as f:
         while True:
             time.sleep(5)
+
+            # Converting a URL into soup object
             try:
                 page = requests.get(base_url + date_url)
             except requests.RequestException as ex:
@@ -24,8 +26,9 @@ def warm_up_soup(start_url):
                 print(err)
                 print("Error on date: %s" % date_url)
                 continue
-            # Page parsed for image URL and transcript
             soup = BeautifulSoup(page.text, 'html.parser')
+
+            # Extract image URL and transcript
             select_image_div = soup.select_one('div[data-image]')
             try:
                 transcript = select_image_div.attrs['data-transcript']
@@ -35,7 +38,9 @@ def warm_up_soup(start_url):
                 date_url = find_next_date(soup)
                 continue
             image_url = select_image_div.attrs['data-image']
-            # Missing images caught and dates noted
+
+            # Download image
+            # Special case: Missing images' dates noted
             if image_url == "https://assets.gocomics.com/content-error-missing-image.jpeg":
                 f.write(date_url + "\n")
                 print("Error: Missing image")
@@ -93,4 +98,5 @@ class DoneException(Exception):
     pass
 
 
-warm_up_soup('/foxtrot/2001/06/17')
+if __name__ == "__main__":
+    main('/foxtrot/2001/06/17')
