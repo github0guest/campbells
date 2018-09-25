@@ -8,17 +8,28 @@ p = re.compile('\w+:')
 
 characters = {}
 
-for row in c.execute('SELECT transcript FROM comics'):
-    m = p.findall(row[0])
-    for word in m:
-        name = str(word).rstrip(":")
-        if name not in characters:
-            characters[name] = 0
-        characters[name] += 1
 
-sorted_list = sorted(characters.items(), key=itemgetter(1), reverse=True)
-for item in sorted_list:
-    c.execute('INSERT INTO characters(name) VALUES(?)', (item[0],))
+def char_insertion():
+    c.execute('SELECT date, transcript FROM comic')
+    date_transcript = c.fetchall()
+    for row in date_transcript:
+        date = row[0]
+        m = p.findall(row[1])
+        for word in m:
+            name = str(word).rstrip(":")
+            try:
+                c.execute('INSERT INTO character(first_name, last_name) VALUES(?,?)', (name, ""))
+            except sqlite3.IntegrityError as err:
+                print(err)
+                continue
+            c.execute('SELECT id FROM character WHERE first_name = ?', (name, ))
+            char_id = c.fetchone()
+            try:
+                c.execute('INSERT INTO comic_character(comic_date, character_id) VALUES (?,?)', (date, char_id[0]))
+            except sqlite3.IntegrityError as err:
+                print(err)
+                continue
+    conn.commit()
+    conn.close()
 
-conn.commit()
-conn.close()
+char_insertion()
