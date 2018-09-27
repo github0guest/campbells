@@ -4,6 +4,7 @@ from datetime import timezone, datetime
 
 conn = sqlite3.connect('foxtrot.db')
 c = conn.cursor()
+c.execute('PRAGMA foreign_keys = ON')
 p = re.compile('\w+:')
 
 characters = {}
@@ -32,7 +33,17 @@ def char_insertion():
     conn.close()
 
 
+def remove_character(first_name):
+    """Remove a row from the character table"""
+    c.execute('SELECT id FROM character WHERE first_name = ?', (first_name, ))
+    char_id = c.fetchone()
+    c.execute('DELETE FROM character WHERE id = ?', (char_id[0], ))
+    conn.commit()
+    conn.close()
+
+
 def characters_from_date(date):
+    """List of characters given a date"""
     dt_obj = datetime.strptime(date, '%Y-%m-%d')
     unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
     names = []
@@ -40,9 +51,11 @@ def characters_from_date(date):
         c2 = conn.cursor()
         c2.execute('SELECT first_name FROM character WHERE id = ?', (row[0],))
         name = c2.fetchone()
-        names.append(name[0])
+        names.append(name[0] + "-" + str(row[0]))
     return sorted(names, key=str.lower)
 
 
 if __name__ == "__main__":
     characters_from_date("1988-08-03")
+    # char_insertion()
+    # remove_character('punishment')
