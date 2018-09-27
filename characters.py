@@ -55,7 +55,21 @@ def characters_from_date(date):
     return sorted(names, key=str.lower)
 
 
+def dates_from_character(first_name):
+    """List of dates on which a given character appears"""
+    c.execute('SELECT id FROM character WHERE first_name = ?', (first_name, ))
+    char_id = c.fetchone()
+    unix_dates = []
+    for row in c.execute('SELECT comic_date FROM comic_character WHERE character_id = ?', (char_id[0], )):
+        unix_dates.append(row[0])
+    readable_dates = []
+    for date in unix_dates:
+        readable_dates.append(datetime.utcfromtimestamp(date).strftime('%Y-%m-%d'))
+    return readable_dates
+
+
 if __name__ == "__main__":
-    characters_from_date("1988-08-03")
+    # characters_from_date("1988-08-03")
+    dates_from_character('Marcus')
     # char_insertion()
     # remove_character('punishment')
