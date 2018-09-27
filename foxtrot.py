@@ -90,7 +90,7 @@ def download_image_update_db(url, image_response, transcript):
     # Insert the date and transcript into database
     c = conn.cursor()
     values = (unix_time, transcript)
-    c.execute('REPLACE INTO comics VALUES (?,?)', values)
+    c.execute('REPLACE INTO comic VALUES (?,?)', values)
     conn.commit()
 
 
@@ -98,5 +98,5 @@ class DoneException(Exception):
     pass
 
 
-if __name__ == "__main__":
-    main('/foxtrot/2001/06/17')
+if __name__ == '__main__':
+    pass
