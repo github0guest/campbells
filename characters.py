@@ -46,26 +46,32 @@ def characters_from_date(date):
     """List of characters given a date"""
     dt_obj = datetime.strptime(date, '%Y-%m-%d')
     unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
+    c.execute('SELECT ALL first_name '
+              'FROM character '
+              'JOIN comic_character '
+              'ON comic_character.character_id = character.id '
+              'WHERE comic_character.comic_date = ?', (unix_time, ))
+    result = c.fetchall()
     names = []
-    for row in c.execute('SELECT character_id FROM comic_character WHERE comic_date = ?', (int(unix_time), )):
-        c2 = conn.cursor()
-        c2.execute('SELECT first_name FROM character WHERE id = ?', (row[0],))
-        name = c2.fetchone()
-        names.append(name[0] + "-" + str(row[0]))
+    for entry in result:
+        names.append(entry[0])
     return sorted(names, key=str.lower)
 
 
 def dates_from_character(first_name):
     """List of dates on which a given character appears"""
-    c.execute('SELECT id FROM character WHERE first_name = ?', (first_name, ))
-    char_id = c.fetchone()
-    unix_dates = []
-    for row in c.execute('SELECT comic_date FROM comic_character WHERE character_id = ?', (char_id[0], )):
-        unix_dates.append(row[0])
+    c.execute('SELECT ALL comic_date '
+              'FROM comic_character '
+              'JOIN character '
+              'ON comic_character.character_id = character.id '
+              'WHERE character.first_name = ?', (first_name, ))
+    unix_dates = c.fetchall()
     readable_dates = []
     for date in unix_dates:
-        readable_dates.append(datetime.utcfromtimestamp(date).strftime('%Y-%m-%d'))
+        readable_dates.append(datetime.utcfromtimestamp(date[0]).strftime('%Y-%m-%d'))
     return readable_dates
+
+# TODO: command line arguments
 
 
 if __name__ == "__main__":
