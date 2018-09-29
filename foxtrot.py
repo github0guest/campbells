@@ -4,11 +4,8 @@ import time
 import sqlite3
 from datetime import timezone, datetime
 
-download_directory = '/Users/shirley/Desktop/foxtrot/'
-base_url = 'https://www.gocomics.com'
-conn = sqlite3.connect('foxtrot.db')
 
-
+# TODO: Write a soup for the comics on the newer website
 def main(start_url):
     date_url = start_url
     with open(download_directory + "missing_images.txt", 'a') as f:
@@ -66,7 +63,6 @@ def main(start_url):
                 date_url = find_next_date(soup)
             except DoneException:
                 break
-    conn.close()
 
 
 def find_next_date(soup):
@@ -99,4 +95,8 @@ class DoneException(Exception):
 
 
 if __name__ == '__main__':
-    pass
+    download_directory = '/Users/shirley/Desktop/foxtrot/'
+    base_url = 'https://www.gocomics.com'
+    conn = sqlite3.connect('foxtrot.db')
+    main('2018-09-23')
+    conn.close()

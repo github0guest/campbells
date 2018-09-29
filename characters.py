@@ -2,15 +2,9 @@ import sqlite3
 import re
 from datetime import timezone, datetime
 
-conn = sqlite3.connect('foxtrot.db')
-c = conn.cursor()
-c.execute('PRAGMA foreign_keys = ON')
-p = re.compile('\w+:')
-
-characters = {}
-
 
 def char_insertion():
+    p = re.compile('\w+:')
     for row in c.execute('SELECT date, transcript FROM comic'):
         date = row[0]
         transcript = p.findall(row[1])
@@ -30,23 +24,22 @@ def char_insertion():
                 print(err)
                 pass
     conn.commit()
-    conn.close()
 
 
+# TODO: Upgrade this function so that it takes a list of characters to remove
+# TODO: Can create column in character table to flag suspicious names
+# TODO: Write a test(s) for this action that will verify the changes in the tables
 def remove_character(first_name):
     """Remove a row from the character table"""
-    c.execute('SELECT id FROM character WHERE first_name = ?', (first_name, ))
-    char_id = c.fetchone()
-    c.execute('DELETE FROM character WHERE id = ?', (char_id[0], ))
+    c.execute('DELETE FROM character WHERE first_name = ?', (first_name, ))
     conn.commit()
-    conn.close()
 
 
 def characters_from_date(date):
     """List of characters given a date"""
     dt_obj = datetime.strptime(date, '%Y-%m-%d')
     unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
-    c.execute('SELECT ALL first_name '
+    c.execute('SELECT first_name '
               'FROM character '
               'JOIN comic_character '
               'ON comic_character.character_id = character.id '
@@ -60,7 +53,7 @@ def characters_from_date(date):
 
 def dates_from_character(first_name):
     """List of dates on which a given character appears"""
-    c.execute('SELECT ALL comic_date '
+    c.execute('SELECT comic_date '
               'FROM comic_character '
               'JOIN character '
               'ON comic_character.character_id = character.id '
@@ -71,11 +64,20 @@ def dates_from_character(first_name):
         readable_dates.append(datetime.utcfromtimestamp(date[0]).strftime('%Y-%m-%d'))
     return readable_dates
 
+
+# TODO: search through transcripts
+# TODO: make a front-end
+
+
 # TODO: command line arguments
 
 
 if __name__ == "__main__":
+    conn = sqlite3.connect('foxtrot.db')
+    c = conn.cursor()
+    c.execute('PRAGMA foreign_keys = ON')
     # characters_from_date("1988-08-03")
-    dates_from_character('Marcus')
+    dates_from_character('IndsertString')
     # char_insertion()
     # remove_character('punishment')
+    conn.close()
