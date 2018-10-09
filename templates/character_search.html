@@ -32,19 +32,19 @@
     img {
         vertical-align: calc(-0.12109375em);
     }
+
     </style>
 </head>
-
 <body>
 
     <div id="app">
         <h1>Foxtrot</h1>
 
-        <input id="search" type="text">
-        <button id="search">Search</button>
+        <input id="search" type="text" v-model="newCharacter">
+        <button v-on:click="enterCharacter(newCharacter)">Enter character</button>
 
         <section v-if="errored">
-            <p>We're sorry, we're not able to retrieve this information at the moment, please try back later</p>
+            <p>Did you enter a valid character above?</p>
         </section>
         <section v-else>
             <div v-if="loading">Loading...</div>
@@ -52,22 +52,15 @@
             <div
                 v-else
                 v-for="date in info"
-                class="date"
+                class="render_comic"
             >
                 <p v-html=renderComic(date)></p>
             </div>
 
-            <div id="comic">
-
-            </div>
         </section>
-
     </div>
 
     <script>
-
-
-
     new Vue({
         el: '#app',
         data () {
@@ -75,15 +68,32 @@
                 info: null,
                 loading: true,
                 errored: false,
+                newCharacter: 'Eileen',
+            }
+        },
+        methods: {
+            enterCharacter(character) {
+                this.newCharacter = character
+            },
 
-                renderComic(date) {
-                    return `<img src="http://127.0.0.1:5000/static/images/` + date + `.gif">`
-                }
+            renderComic(date) {
+                return `<img src="http://127.0.0.1:5000/static/images/` + date + `.gif">`
             }
         },
         mounted () {
             axios
-                .get('http://127.0.0.1:5000/json/dates/Marcus')
+                .get('http://127.0.0.1:5000/json/dates/' + this.newCharacter )
+                .then(response => (this.info = response.data))
+                .catch(error => {
+                    console.log(error)
+                    this.errored = true
+                })
+                .finally(() => this.loading = false)
+        },
+
+        updated () {
+            axios
+                .get('http://127.0.0.1:5000/json/dates/' + this.newCharacter )
                 .then(response => (this.info = response.data))
                 .catch(error => {
                     console.log(error)
