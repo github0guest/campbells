@@ -3,51 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/jgthms/minireset.css/master/minireset.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,900">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <style>
 
-    /* resets */
-    * { color: inherit; }
-    input { font: inherit; border: unset; background: unset; }
-    input:focus { outline: unset; }
-
-    :root {
-        font: 1rem/1.175 "BlinkMacSystemFont", -apple-system, "Roboto", sans-seri;
-    }
-
-    #app {
-        display: flex;
-        flex-direction: column; justify-content: center; align-items: center;
-        {#width: 100vw; height: 100vh;#}
-        {#font-weight: 900; font-size: 2rem;#}
-        {#color: hsl(0, 0%, 0%);#}
-        {#background: hsl(158, 100%, 89%);#}
-    }
-
-    input { text-align: center; }
-
-    img {
-        vertical-align: calc(-0.12109375em);
-    }
 
     </style>
 </head>
 <body>
-
-    <div id="app">
-        <h1>Foxtrot</h1>
-
-        <input id="search" type="text" v-model="newCharacter">
+<h1>Foxtrot</h1>
+    <div id="character">
+        <input id="character" type="text" v-model="newCharacter">
         <button v-on:click="enterCharacter(newCharacter)">Enter character</button>
 
         <section v-if="errored">
-            <p>Did you enter a valid character above?</p>
+            <p>Something's not working...</p>
         </section>
         <section v-else>
-            <div v-if="loading">Loading...</div>
+            <div v-if="loading">Enter a valid character above</div>
 
             <div
                 v-else
@@ -56,53 +29,28 @@
             >
                 <p v-html=renderComic(date)></p>
             </div>
-
         </section>
     </div>
 
-    <script>
-    new Vue({
-        el: '#app',
-        data () {
-            return {
-                info: null,
-                loading: true,
-                errored: false,
-                newCharacter: 'Eileen',
-            }
-        },
-        methods: {
-            enterCharacter(character) {
-                this.newCharacter = character
-            },
+    <div id="search">
+        <input id="search" type="text" v-model="searchTerm">
+        <button v-on:click="search(searchTerm)">Enter search term</button>
 
-            renderComic(date) {
-                return `<img src="http://127.0.0.1:5000/static/images/` + date + `.gif">`
-            }
-        },
-        mounted () {
-            axios
-                .get('http://127.0.0.1:5000/json/dates/' + this.newCharacter )
-                .then(response => (this.info = response.data))
-                .catch(error => {
-                    console.log(error)
-                    this.errored = true
-                })
-                .finally(() => this.loading = false)
-        },
+        <section v-if="errored">
+            <p>Something's not working...</p>
+        </section>
+        <section v-else>
+            <div v-if="loading">Enter a search term above</div>
 
-        updated () {
-            axios
-                .get('http://127.0.0.1:5000/json/dates/' + this.newCharacter )
-                .then(response => (this.info = response.data))
-                .catch(error => {
-                    console.log(error)
-                    this.errored = true
-                })
-                .finally(() => this.loading = false)
-        }
-    })
-
-    </script>
+            <div
+                    v-else
+                    v-for="date in info"
+                    class="render_comic"
+            >
+                <p v-html=renderComic(date)></p>
+            </div>
+        </section>
+    </div>
+    <script src="character_search.js"></script>
 </body>
 </html>
