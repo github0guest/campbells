@@ -1,5 +1,5 @@
-import sqlite3
 import re
+import sqlite3
 from datetime import timezone, datetime
 
 
@@ -77,6 +77,8 @@ class ComicManager:
     def search_transcripts(self, search_term):
         """Searches comic transcripts and returns the dates for matching comics"""
         c = self.conn.cursor()
+        if search_term is "":
+            raise EmptySearchException
         c.execute('SELECT date FROM search_transcripts WHERE transcript MATCH ?', (search_term,))
         unix_dates = c.fetchall()
         readable_dates = []
@@ -87,6 +89,9 @@ class ComicManager:
     # TODO: search through transcripts
     # TODO: command line arguments
 
+
+class EmptySearchException(Exception):
+    pass
 
 if __name__ == "__main__":
     conn = sqlite3.connect('foxtrot.db')
