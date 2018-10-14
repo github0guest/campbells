@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, render_template, request
+from storage import EmptySearchException
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from storage import ComicManager
 
@@ -6,27 +7,16 @@ app = Flask(__name__)
 CORS(app)
 
 
-class InvalidUsage(Exception):
-    status_code = 400
-
-    def __init__(self, message, status_code=None, payload=None):
+class HTTPError(Exception):
+    def __init__(self, status_code=None):
         Exception.__init__(self)
-        self.message = message
         if status_code is not None:
             self.status_code = status_code
-        self.payload = payload
-
-    def to_dict(self):
-        rv = dict(self.payload or ())
-        rv['message'] = self.message
-        return rv
 
 
-@app.errorhandler(InvalidUsage)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
+@app.errorhandler(HTTPError)
+def handle_http_error(error):
+    return Response(status=error.status_code)
 
 
 @app.route('/json/characters/')
@@ -49,9 +39,12 @@ def search():
     cm = ComicManager('foxtrot.db')
     try:
         return jsonify(cm.search_transcripts(content['text']))
+    except EmptySearchException as ex:
+        print(ex)
+        raise HTTPError(204)
     except KeyError as err:
         print(err)
-        raise InvalidUsage('KeyError', status_code=400)
+        raise HTTPError(401)
 
 
 if __name__ == '__main__':
