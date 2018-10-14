@@ -32,7 +32,31 @@
         </section>
     </div>
 
-    <div id="search">
+<div id="date">
+    <input id="date" type="text" v-model="dateSearch">
+    <button v-on:click="enterDate(dateSearch)">Enter date</button>
+
+    <section v-if="errored">
+        <p>Something's not working...</p>
+    </section>
+    <section v-else>
+        <div v-if="loading">Enter a valid date above</div>
+        <div v-else>
+            <p v-html="renderComic(dateSearch)"></p>
+            <h2>The characters for {{ dateSearch }} are:</h2>
+            <div v-for="character in info">
+                <ul>
+                    <li>{{ character }}</li>
+                </ul>
+            </div>
+
+        </div>
+    </section>
+</div>
+
+
+
+<div id="search">
         <input id="search" type="text" v-model="searchTerm">
         <button v-on:click="search(searchTerm)">Enter search term</button>
 
