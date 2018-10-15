@@ -3,7 +3,7 @@ import sqlite3
 from datetime import timezone, datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Comic, Character, ComicCharacter
+from models import Comic, Character, ComicCharacter, SearchTranscripts
 from contextlib import contextmanager
 
 
@@ -90,11 +90,10 @@ class ComicManager:
             readable_dates.append(datetime.utcfromtimestamp(date[0]).strftime('%Y-%m-%d'))
         return readable_dates
 
-    # TODO: search through transcripts
     # TODO: command line arguments
 
 
-class ComicManager_Alchemy:
+class ComicManagerAlchemy:
     def __init__(self):
         engine = create_engine('sqlite:///foxtrot.db')
         self.DBSession = sessionmaker(bind=engine)
@@ -126,17 +125,37 @@ class ComicManager_Alchemy:
                             s2.add(char_entry)
                             set_names_all_characters.add(name)
                     if name not in set_names_for_date:
-                        with self.session_scope() as s3:
-                            char = s3.query(Character).filter(Character.first_name == name).one()
+                        with self.session_scope() as s2:
+                            char = s2.query(Character).filter(Character.first_name == name).one()
                             comic_char_entry = ComicCharacter(comic_date=entry.date, character_id=char.id)
-                            s3.add(comic_char_entry)
+                            s2.add(comic_char_entry)
                             set_names_for_date.add(name)
 
+    def characters_from_date(self, date):
+        """List of characters given a date"""
+        dt_obj = datetime.strptime(date, '%Y-%m-%d')
+        unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
+        with self.session_scope() as s:
+            comic = s.query(Comic).filter(Comic.date==unix_time).one()
+            return [character.first_name for character in comic.characters]
+
+    def dates_from_character(self, first_name):
+        """List of dates on which a given character appears"""
+        with self.session_scope() as s:
+            char = s.query(Character).filter(Character.first_name==first_name).one()
+            return [datetime.utcfromtimestamp(comic.date).strftime('%Y-%m-%d') for comic in char.comics]
+
+    def search_transcripts(self, search_term):
+        """Searches comic transcripts and returns the dates for matching comics"""
+
+        with self.session_scope() as s:
+            results = s.query(SearchTranscripts).filter('transcript MATCH :search_term').params(search_term=search_term).all()
+            return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
 
 class EmptySearchException(Exception):
     pass
 
 
 if __name__ == "__main__":
-    test = ComicManager_Alchemy()
-    test.comic_character_insertion()
+    test = ComicManagerAlchemy()
+    test.char_insertion()
