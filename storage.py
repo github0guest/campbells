@@ -1,6 +1,10 @@
 import re
 import sqlite3
 from datetime import timezone, datetime
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models import Comic, Character, ComicCharacter
+from contextlib import contextmanager
 
 
 class ComicManager:
@@ -33,7 +37,7 @@ class ComicManager:
                 except sqlite3.IntegrityError as err:
                     print(err)
                     pass
-        conn.commit()
+        self.conn.commit()
 
     # TODO: Upgrade this function so that it takes a list of characters to remove
     # TODO: Can create column in character table to flag suspicious names
@@ -42,7 +46,7 @@ class ComicManager:
         """Remove a row from the character table"""
         c = self.conn.cursor()
         c.execute('DELETE FROM character WHERE first_name = ?', (first_name,))
-        conn.commit()
+        self.conn.commit()
 
     def characters_from_date(self, date):
         """List of characters given a date"""
@@ -90,15 +94,49 @@ class ComicManager:
     # TODO: command line arguments
 
 
+class ComicManager_Alchemy:
+    def __init__(self):
+        engine = create_engine('sqlite:///foxtrot.db')
+        self.DBSession = sessionmaker(bind=engine)
+
+    @contextmanager
+    def session_scope(self):
+        """Provide a transactional scope around a series of operations."""
+        session = self.DBSession()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def char_insertion(self):
+        reg_word_before_colon = re.compile('(\w+):')
+        with self.session_scope() as s:
+            set_names_all_characters = set()
+            for entry in s.query(Comic):
+                names = reg_word_before_colon.findall(entry.transcript)
+                set_names_for_date = set()
+                for name in names:
+                    if name not in set_names_all_characters:
+                        char_entry = Character(first_name=name)
+                        with self.session_scope() as s2:
+                            s2.add(char_entry)
+                            set_names_all_characters.add(name)
+                    if name not in set_names_for_date:
+                        with self.session_scope() as s3:
+                            char = s3.query(Character).filter(Character.first_name == name).one()
+                            comic_char_entry = ComicCharacter(comic_date=entry.date, character_id=char.id)
+                            s3.add(comic_char_entry)
+                            set_names_for_date.add(name)
+
+
 class EmptySearchException(Exception):
     pass
 
+
 if __name__ == "__main__":
-    conn = sqlite3.connect('foxtrot.db')
-    cursor = conn.cursor()
-    cursor.execute('PRAGMA foreign_keys = ON')
-    # characters_from_date(cursor, "1988-08-03")
-    # dates_from_character(cursor, 'IndsertString')
-    # char_insertion(cursor)
-    # remove_character('punishment')
-    conn.close()
+    test = ComicManager_Alchemy()
+    test.comic_character_insertion()
