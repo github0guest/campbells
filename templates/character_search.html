@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:v-on="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,17 +13,14 @@
 <body>
 <h1>Foxtrot</h1>
     <div id="character">
-        <input id="character" type="text" v-model="newCharacter">
-        <button v-on:click="enterCharacter(newCharacter)">Enter character</button>
+        <input id="character" type="text" v-model="newCharacter" placeholder="Character name">
+        <button v-on:click="enterCharacter(newCharacter)">Enter</button>
 
         <section v-if="errored">
             <p>Something's not working...</p>
         </section>
         <section v-else>
-            <div v-if="loading">Enter a valid character above</div>
-
             <div
-                v-else
                 v-for="date in info"
                 class="render_comic"
             >
@@ -33,23 +30,22 @@
     </div>
 
 <div id="date">
-    <input id="date" type="text" v-model="dateSearch">
-    <button v-on:click="enterDate(dateSearch)">Enter date</button>
-
+    <input id="date" type="text" v-model.lazy="dateSearch" placeholder="YYYY-MM-DD">
+    <button v-on:click="enterDate(dateSearch)">Enter</button>
     <section v-if="errored">
         <p>Something's not working...</p>
     </section>
     <section v-else>
-        <div v-if="loading">Enter a valid date above</div>
-        <div v-else>
-            <p v-html="renderComic(dateSearch)"></p>
-            <h2>The characters for {{ dateSearch }} are:</h2>
-            <div v-for="character in info">
-                <ul>
-                    <li>{{ character }}</li>
-                </ul>
-            </div>
-
+        <div v-if="waiting"></div>
+        <p v-else-if="responseStatus !== 200">No comics match the search.</p>
+        <div v-else
+             id="comic_for_date"
+        >
+            <p v-html="renderComic(dateSearch)" v-on:click="alert(meow)"></p>
+            <h2>The characters for this date are:</h2>
+            <ul v-for="character in info">
+                <li>{{ character }}</li>
+            </ul>
         </div>
     </section>
 </div>
@@ -57,17 +53,14 @@
 
 
 <div id="search">
-        <input id="search" type="text" v-model="searchTerm">
-        <button v-on:click="search(searchTerm)">Enter search term</button>
+        <input id="search" type="text" v-model="searchTerm" placeholder="Try 'Skeeter Falls'">
+        <button v-on:click="search(searchTerm)">Search</button>
 
         <section v-if="errored">
             <p>Something's not working...</p>
         </section>
         <section v-else>
-            <div v-if="loading">Enter a search term above</div>
-
             <div
-                    v-else
                     v-for="date in info"
                     class="render_comic"
             >

@@ -2,9 +2,9 @@ new Vue({
     el: '#character',
     data: {
         info: null,
-        loading: true,
+        waiting: true,
         errored: false,
-        newCharacter: 'Eileen',
+        newCharacter: '',
     },
     methods: {
         enterCharacter(character) {
@@ -16,7 +16,7 @@ new Vue({
                     console.log(error);
                     this.errored = true
                 })
-                .finally(() => this.loading = false)
+                .finally(() => this.waiting = false)
         },
         renderComic(date) {
             return date + `<img src="http://127.0.0.1:5000/static/images/` + date + `.gif">`
@@ -29,21 +29,25 @@ new Vue({
     el: '#date',
     data: {
         info: null,
-        loading: true,
+        waiting: true,
         errored: false,
-        dateSearch: '1988-04-11',
+        dateSearch: '',
+        responseStatus: 200,
     },
     methods: {
         enterDate(date) {
             this.dateSearch = date;
             axios
                 .get('http://127.0.0.1:5000/json/characters/?date=' + this.dateSearch )
-                .then(response => (this.info = response.data))
+                .then(response => {
+                    this.info = response.data;
+                    this.responseStatus =response.status;
+                })
                 .catch(error => {
                     console.log(error);
-                    this.errored = true
+                    this.errored = true;
                 })
-                .finally(() => this.loading = false)
+                .finally(() => this.waiting = false)
         },
         renderComic(date) {
             return `<img src="http://127.0.0.1:5000/static/images/` + this.dateSearch + `.gif">`
@@ -56,9 +60,8 @@ new Vue({
     el: '#search',
     data: {
         info: null,
-        loading: true,
         errored: false,
-        searchTerm: 'Skeeter Falls',
+        searchTerm: '',
     },
     methods: {
         search(term) {
@@ -69,7 +72,6 @@ new Vue({
                     console.log(error);
                     this.errored = true
                 })
-                .finally(() => this.loading = false)
         },
         renderComic(date) {
             return date + `<img src="http://127.0.0.1:5000/static/images/` + date + `.gif">`
