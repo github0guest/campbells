@@ -1,7 +1,7 @@
 import re
 import sqlite3
 from datetime import timezone, datetime
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Comic, Character, ComicCharacter, SearchTranscripts
 from contextlib import contextmanager
@@ -94,8 +94,8 @@ class ComicManager:
 
 
 class ComicManagerAlchemy:
-    def __init__(self):
-        engine = create_engine('sqlite:///foxtrot.db')
+    def __init__(self, database):
+        engine = create_engine(database)
         self.DBSession = sessionmaker(bind=engine)
 
     @contextmanager
@@ -136,8 +136,18 @@ class ComicManagerAlchemy:
         dt_obj = datetime.strptime(date, '%Y-%m-%d')
         unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
         with self.session_scope() as s:
+            # characters = s.query(Character).join(Character.comics).filter(Comic.date==unix_time).all()
             comic = s.query(Comic).filter(Comic.date==unix_time).one()
             return [character.first_name for character in comic.characters]
+            #TODO
+
+    def transcript_from_date(self, date):
+        """Transcript for a given date"""
+        dt_obj = datetime.strptime(date, '%Y-%m-%d')
+        unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
+        with self.session_scope() as s:
+            comic = s.query(Comic).filter(Comic.date==unix_time).one()
+            return comic.transcript
 
     def dates_from_character(self, first_name):
         """List of dates on which a given character appears"""
@@ -147,9 +157,8 @@ class ComicManagerAlchemy:
 
     def search_transcripts(self, search_term):
         """Searches comic transcripts and returns the dates for matching comics"""
-
         with self.session_scope() as s:
-            results = s.query(SearchTranscripts).filter('transcript MATCH :search_term').params(search_term=search_term).all()
+            results = s.query(SearchTranscripts).filter(text('transcript MATCH :search_term')).params(search_term=search_term).all()
             return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
 
 class EmptySearchException(Exception):
@@ -158,4 +167,4 @@ class EmptySearchException(Exception):
 
 if __name__ == "__main__":
     test = ComicManagerAlchemy()
-    test.char_insertion()
+    print(test.transcript_from_date('2011-07-03'))
