@@ -161,10 +161,26 @@ class ComicManagerAlchemy:
             results = s.query(SearchTranscripts).filter(text('transcript MATCH :search_term')).params(search_term=search_term).all()
             return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
 
+    def get_next_comic(self, date):
+        """Returns next chronological comic for given date"""
+        dt_obj = datetime.strptime(date, '%Y-%m-%d')
+        unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
+        with self.session_scope() as s:
+            selection = s.query(Comic).order_by(Comic.date).filter(Comic.date > unix_time).first()
+            return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+
+    def get_previous_comic(self, date):
+        """Returns next chronological comic for given date"""
+        dt_obj = datetime.strptime(date, '%Y-%m-%d')
+        unix_time = datetime(dt_obj.year, dt_obj.month, dt_obj.day, tzinfo=timezone.utc).timestamp()
+        with self.session_scope() as s:
+            selection = s.query(Comic).order_by(Comic.date.desc()).filter(Comic.date < unix_time).first()
+            return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+
+
 class EmptySearchException(Exception):
     pass
 
 
 if __name__ == "__main__":
-    test = ComicManagerAlchemy()
-    print(test.transcript_from_date('2011-07-03'))
+    pass
