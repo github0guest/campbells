@@ -1,13 +1,13 @@
 import unittest
-from storage import ComicManager
+from storage import ComicManagerAlchemy
 
 
 class TestCharacters(unittest.TestCase):
     def setUp(self):
-        self.cm = ComicManager('foxtrot.db')
+        self.cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
 
     def test_characters_from_date(self):
-        self.assertEqual(self.cm.characters_from_date("1988-08-03"), ['Jason', 'Roger'])
+        self.assertEqual(self.cm.characters_from_date("1988-08-03"), ['Jason', 'punishment', 'Roger'])
 
     def test_dates_from_character(self):
         self.assertEqual(self.cm.dates_from_character("Marcus"),
@@ -100,8 +100,12 @@ class TestCharacters(unittest.TestCase):
         self.assertEqual(self.cm.search_transcripts("skeeter falls"),
                          ['1996-08-12', '1996-08-15', '1996-08-16', '1996-08-24'])
 
-    def tearDown(self):
-        self.cm.close()
+    def test_get_next_comic(self):
+        self.assertEqual(self.cm.get_next_comic('1988-08-13'), '1988-08-15')
+
+    def test_get_previous_comic(self):
+        self.assertEqual(self.cm.get_previous_comic('1988-08-15'), '1988-08-13')
+        self.assertEqual(self.cm.get_previous_comic('1992-03-31'), '1992-03-30')
 
 
 if __name__ == '__main__':
