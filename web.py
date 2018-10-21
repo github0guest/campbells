@@ -1,4 +1,4 @@
-from storage import NotImplementedException, InvalidDateFormatException, NonexistentComicException
+from storage import NotImplementedException, NonexistentComicException
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from storage import ComicManager
@@ -18,24 +18,6 @@ class HTTPError(Exception):
 @app.errorhandler(HTTPError)
 def handle_http_error(error):
     return Response(status=error.status_code)
-
-
-@app.route('/json/characters/')
-def json_characters():
-    date = request.args.get('date')
-    cm = ComicManager(config.database)
-    try:
-        return jsonify(cm.characters_from_date(date))
-    except InvalidDateFormatException as ex:
-        print(ex)
-        raise HTTPError(400)
-
-
-@app.route('/json/dates/')
-def json_dates():
-    character = request.args.get('character')
-    cm = ComicManager(config.database)
-    return jsonify(cm.dates_from_character(character))
 
 
 @app.route('/json/search/', methods=['POST'])
