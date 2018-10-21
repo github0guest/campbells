@@ -1,7 +1,8 @@
 from storage import NotImplementedException, InvalidDateFormatException, NonexistentComicException
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
-from storage import ComicManagerAlchemy
+from storage import ComicManager
+import config
 
 app = Flask(__name__)
 CORS(app)
@@ -22,7 +23,7 @@ def handle_http_error(error):
 @app.route('/json/characters/')
 def json_characters():
     date = request.args.get('date')
-    cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
+    cm = ComicManager(config.database)
     try:
         return jsonify(cm.characters_from_date(date))
     except InvalidDateFormatException as ex:
@@ -33,14 +34,14 @@ def json_characters():
 @app.route('/json/dates/')
 def json_dates():
     character = request.args.get('character')
-    cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
+    cm = ComicManager(config.database)
     return jsonify(cm.dates_from_character(character))
 
 
 @app.route('/json/search/', methods=['POST'])
 def search():
     content = request.get_json(force=True)
-    cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
+    cm = ComicManager(config.database)
     try:
         return jsonify(cm.search_transcripts(content['text']))
     except NotImplementedException as ex:
@@ -51,7 +52,7 @@ def search():
 @app.route('/json/comic/next')
 def json_next_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
+    cm = ComicManager(config.database)
     try:
         return jsonify(cm.get_next_comic(current_date))
     except NonexistentComicException as ex:
@@ -62,7 +63,7 @@ def json_next_comic():
 @app.route('/json/comic/previous')
 def json_previous_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManagerAlchemy('sqlite:///foxtrot.db')
+    cm = ComicManager(config.database)
     try:
         return jsonify(cm.get_previous_comic(current_date))
     except NonexistentComicException as ex:

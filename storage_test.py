@@ -1,10 +1,11 @@
 import unittest
-from storage import ComicManagerAlchemy, NonexistentComicException
+import config
+from storage import ComicManager, NonexistentComicException
 
 
 class TestCharacters(unittest.TestCase):
     def setUp(self):
-        self.cm = ComicManagerAlchemy('sqlite:///foxtrot.db', echo=False)
+        self.cm = ComicManager(config.database, echo=False)
 
     def test_characters_from_date(self):
         self.assertEqual(self.cm.characters_from_date("1988-08-03"), ['Jason', 'punishment', 'Roger'])

@@ -1,8 +1,8 @@
-from storage import ComicManagerAlchemy
+from storage import ComicManager
 from models import Comic
 
-cm_lite = ComicManagerAlchemy('sqlite:///foxtrot.db')
-cm_mysql = ComicManagerAlchemy('mysql://gregoria:moomie11@gregoria.mysql.pythonanywhere-services.com/gregoria$foxtrot?charset=utf8')
+cm_lite = ComicManager('sqlite:///foxtrot.db')
+cm_mysql = ComicManager('mysql://gregoria:moomie11@gregoria.mysql.pythonanywhere-services.com/gregoria$foxtrot?charset=utf8')
 
 with cm_lite.session_scope() as s_lite:
     comics = s_lite.query(Comic)
