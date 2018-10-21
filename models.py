@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, Text, create_engine, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, Text, create_engine, UniqueConstraint, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -21,8 +21,8 @@ class Character(Base):
         UniqueConstraint('first_name', 'last_name'),
     )
     id = Column(Integer, primary_key=True)
-    first_name = Column(Text)
-    last_name = Column(Text)
+    first_name = Column(String(50))
+    last_name = Column(String(50))
     comics = relationship(
         Comic,
         secondary='comic_character'
