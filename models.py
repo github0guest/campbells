@@ -42,5 +42,5 @@ class SearchTranscripts(Base):
 
 
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///foxtrot.db')
+    engine = create_engine('mysql://gregoria:moomie11@gregoria.mysql.pythonanywhere-services.com/gregoria$foxtrot')
     Base.metadata.create_all(engine)
