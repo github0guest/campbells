@@ -44,12 +44,17 @@ class ComicManager:
 
     def search_transcripts(self, search_term):
         """Searches comic transcripts and returns the dates for matching comics"""
-        if search_term is "":
-            raise NotImplementedException
         with self.session_scope() as s:
-            results = s.query(SearchTranscripts).filter(text('transcript MATCH :search_term')).params(
-                search_term=search_term).all()
+            if config.database.startswith('sqlite'):
+                results = s.query(SearchTranscripts).filter(text('transcript MATCH :search_term')).params(
+                    search_term=search_term).all()
+            elif config.database.startswith('mysql'):
+                results = s.query(Comic).filter(text('MATCH(transcript) AGAINST(:search_term)')).params(
+                    search_term=search_term).all()
+            else:
+                raise NotImplementedException
             return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
+
 
     def get_next_comic(self, date):
         """Returns next chronological comic for given date"""
@@ -70,6 +75,10 @@ class ComicManager:
             except NoResultFound:
                 raise NonexistentComicException
             return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+
+
+class InvalidDateFormatException(Exception):
+    pass
 
 
 class NonexistentComicException(Exception):
