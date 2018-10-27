@@ -45,7 +45,7 @@ class ComicManager:
                 search_term=search_term).all()
         else:
             raise NotImplementedException
-        return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
+        return [datetime.utcfromtimestamp(result.date).date() for result in results]
 
     def get_next_comic(self, date):
         """Returns next chronological comic for given date"""
@@ -53,7 +53,7 @@ class ComicManager:
         selection = Comic.query.order_by(Comic.date).filter(Comic.date > unix_time).first()
         if selection is None:
             raise NonexistentComicException
-        return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+        return datetime.utcfromtimestamp(selection.date).date()
 
     def get_previous_comic(self, date):
         """Returns next chronological comic for given date"""
@@ -61,7 +61,7 @@ class ComicManager:
         selection = Comic.query.order_by(Comic.date.desc()).filter(Comic.date < unix_time).first()
         if selection is None:
             raise NonexistentComicException
-        return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+        return datetime.utcfromtimestamp(selection.date).date()
 
 
 if __name__ == "__main__":
