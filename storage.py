@@ -1,19 +1,15 @@
 from datetime import timezone, datetime
-from flask_sqlalchemy import SQLAlchemy
 from exceptions import InvalidDateFormatException, NonexistentComicException, NotImplementedException
 from models import Comic, SearchTranscripts
 from contextlib import contextmanager
+from app import app, db
 
 
 class ComicManager:
-    def __init__(self, app):
-        self.app = app
-        self.db = SQLAlchemy(self.app)
-
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
-        session = self.db.session
+        session = db.session
         try:
             yield session
             session.commit()
@@ -38,13 +34,14 @@ class ComicManager:
         comic = Comic.query.filter(Comic.date == unix_time).one()
         return comic.transcript
 
-    def search_transcripts(self, search_term):
+    @staticmethod
+    def search_transcripts(search_term):
         """Searches comic transcripts and returns the dates for matching comics"""
-        if self.app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
-            results = SearchTranscripts.query.filter(self.db.text('transcript MATCH :search_term')).params(
+        if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
+            results = SearchTranscripts.query.filter(db.text('transcript MATCH :search_term')).params(
                 search_term=search_term).all()
-        elif self.app.config['SQLALCHEMY_DATABASE_URI'].startswith('mysql'):
-            results = Comic.query.filter(self.db.text('MATCH(transcript) AGAINST(:search_term)')).params(
+        elif app.config['SQLALCHEMY_DATABASE_URI'].startswith('mysql'):
+            results = Comic.query.filter(db.text('MATCH(transcript) AGAINST(:search_term)')).params(
                 search_term=search_term).all()
         else:
             raise NotImplementedException

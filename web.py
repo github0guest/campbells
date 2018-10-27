@@ -26,7 +26,7 @@ def handle_http_error(error):
 @app.route('/json/search/', methods=['POST'])
 def search():
     content = request.get_json(force=True)
-    cm = ComicManager(SQLAlchemy(app))
+    cm = ComicManager()
     try:
         return jsonify(cm.search_transcripts(content['text']))
     except NotImplementedException as ex:
@@ -37,7 +37,7 @@ def search():
 @app.route('/json/comic/next')
 def json_next_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManager(app.database, pool_size=3)
+    cm = ComicManager()
     try:
         return jsonify(cm.get_next_comic(current_date))
     except NonexistentComicException as ex:
@@ -48,7 +48,7 @@ def json_next_comic():
 @app.route('/json/comic/previous')
 def json_previous_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManager(app.database, pool_size=3)
+    cm = ComicManager()
     try:
         return jsonify(cm.get_previous_comic(current_date))
     except NonexistentComicException as ex:
