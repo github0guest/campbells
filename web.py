@@ -1,11 +1,14 @@
-from storage import NotImplementedException, NonexistentComicException
-from flask import Flask, jsonify, request, Response
+import logging
+from flask_sqlalchemy import SQLAlchemy
+from exceptions import NonexistentComicException, NotImplementedException
+from flask import jsonify, request, Response
 from flask_cors import CORS
 from storage import ComicManager
-import config
+import app
 
-app = Flask(__name__)
+
 CORS(app)
+logging.basicConfig(format='%(asctime)s %(message)s')
 
 
 class HTTPError(Exception):
@@ -23,33 +26,33 @@ def handle_http_error(error):
 @app.route('/json/search/', methods=['POST'])
 def search():
     content = request.get_json(force=True)
-    cm = ComicManager(config.database)
+    cm = ComicManager(SQLAlchemy(app))
     try:
         return jsonify(cm.search_transcripts(content['text']))
     except NotImplementedException as ex:
-        print(ex)
+        logging.exception(ex)
         raise HTTPError(501)
 
 
 @app.route('/json/comic/next')
 def json_next_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManager(config.database)
+    cm = ComicManager(app.database, pool_size=3)
     try:
         return jsonify(cm.get_next_comic(current_date))
     except NonexistentComicException as ex:
-        print(ex)
+        logging.exception(ex)
         raise HTTPError(204)
 
 
 @app.route('/json/comic/previous')
 def json_previous_comic():
     current_date = request.args.get('current_date')
-    cm = ComicManager(config.database)
+    cm = ComicManager(app.database, pool_size=3)
     try:
         return jsonify(cm.get_previous_comic(current_date))
     except NonexistentComicException as ex:
-        print(ex)
+        logging.exception(ex)
         raise HTTPError(204)
 
 

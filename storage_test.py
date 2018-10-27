@@ -1,11 +1,12 @@
 import unittest
-import config
-from storage import ComicManager, NonexistentComicException
+from app import app
+from storage import ComicManager
+from exceptions import NonexistentComicException
 
 
 class TestCharacters(unittest.TestCase):
     def setUp(self):
-        self.cm = ComicManager(config.database, echo=False)
+        self.cm = ComicManager(app)
 
     def test_search_transcripts(self):
         self.assertEqual(self.cm.search_transcripts("skeeter falls"),

@@ -1,26 +1,23 @@
 from datetime import timezone, datetime
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.exc import NoResultFound
-
-import config
+from flask_sqlalchemy import SQLAlchemy
+from exceptions import InvalidDateFormatException, NonexistentComicException, NotImplementedException
 from models import Comic, SearchTranscripts
 from contextlib import contextmanager
 
 
 class ComicManager:
-    def __init__(self, database, echo=False):
-        engine = create_engine(database, echo=echo)
-        self.DBSession = sessionmaker(bind=engine)
+    def __init__(self, app):
+        self.app = app
+        self.db = SQLAlchemy(self.app)
 
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
-        session = self.DBSession()
+        session = self.db.session
         try:
             yield session
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         finally:
@@ -38,57 +35,37 @@ class ComicManager:
     def transcript_from_date(self, date):
         """Transcript for a given date"""
         unix_time = self.parse_date(date)
-        with self.session_scope() as s:
-            comic = s.query(Comic).filter(Comic.date == unix_time).one()
-            return comic.transcript
+        comic = Comic.query.filter(Comic.date == unix_time).one()
+        return comic.transcript
 
     def search_transcripts(self, search_term):
         """Searches comic transcripts and returns the dates for matching comics"""
-        with self.session_scope() as s:
-            if config.database.startswith('sqlite'):
-                results = s.query(SearchTranscripts).filter(text('transcript MATCH :search_term')).params(
-                    search_term=search_term).all()
-            elif config.database.startswith('mysql'):
-                results = s.query(Comic).filter(text('MATCH(transcript) AGAINST(:search_term)')).params(
-                    search_term=search_term).all()
-            else:
-                raise NotImplementedException
-            return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
-
+        if self.app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
+            results = SearchTranscripts.query.filter(self.db.text('transcript MATCH :search_term')).params(
+                search_term=search_term).all()
+        elif self.app.config['SQLALCHEMY_DATABASE_URI'].startswith('mysql'):
+            results = Comic.query.filter(self.db.text('MATCH(transcript) AGAINST(:search_term)')).params(
+                search_term=search_term).all()
+        else:
+            raise NotImplementedException
+        return [datetime.utcfromtimestamp(result.date).strftime('%Y-%m-%d') for result in results]
 
     def get_next_comic(self, date):
         """Returns next chronological comic for given date"""
         unix_time = self.parse_date(date)
-        with self.session_scope() as s:
-            try:
-                selection = s.query(Comic).order_by(Comic.date).filter(Comic.date > unix_time).limit(1).one()
-            except NoResultFound:
-                raise NonexistentComicException
-            return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
+        selection = Comic.query.order_by(Comic.date).filter(Comic.date > unix_time).first()
+        if selection is None:
+            raise NonexistentComicException
+        return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
 
     def get_previous_comic(self, date):
         """Returns next chronological comic for given date"""
         unix_time = self.parse_date(date)
-        with self.session_scope() as s:
-            try:
-                selection = s.query(Comic).order_by(Comic.date.desc()).filter(Comic.date < unix_time).limit(1).one()
-            except NoResultFound:
-                raise NonexistentComicException
-            return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
-
-
-class InvalidDateFormatException(Exception):
-    pass
-
-
-class NonexistentComicException(Exception):
-    pass
-
-
-class NotImplementedException(Exception):
-    pass
+        selection = Comic.query.order_by(Comic.date.desc()).filter(Comic.date < unix_time).first()
+        if selection is None:
+            raise NonexistentComicException
+        return datetime.utcfromtimestamp(selection.date).strftime('%Y-%m-%d')
 
 
 if __name__ == "__main__":
-    cm = ComicManager(config.database)
-    print(cm.transcript_from_date("1999-06-12"))
+    pass

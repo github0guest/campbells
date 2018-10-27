@@ -1,46 +1,20 @@
-from sqlalchemy import Column, ForeignKey, Integer, Text, create_engine, UniqueConstraint, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from flask_sqlalchemy import SQLAlchemy
+from app import app
 
-Base = declarative_base()
+db = SQLAlchemy(app)
 
 
-class Comic(Base):
+class Comic(db.Model):
     __tablename__ = 'comic'
-    date = Column(Integer, primary_key=True)
-    transcript = Column(Text)
-    characters = relationship(
-        'Character',
-        secondary='comic_character'
-    )
+    date = db.Column(db.Integer, primary_key=True)
+    transcript = db.Column(db.Text)
 
 
-class Character(Base):
-    __tablename__ = 'character'
-    __table_args__ = (
-        UniqueConstraint('first_name', 'last_name'),
-    )
-    id = Column(Integer, primary_key=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    comics = relationship(
-        Comic,
-        secondary='comic_character'
-    )
-
-
-class ComicCharacter(Base):
-    __tablename__ = 'comic_character'
-    character_id = Column(Integer, ForeignKey('character.id'), primary_key=True)
-    comic_date = Column(Integer, ForeignKey('comic.date'), primary_key=True)
-
-
-class SearchTranscripts(Base):
+class SearchTranscripts(db.Model):
     __tablename__ = 'search_transcripts'
-    transcript = Column(Text)
-    date = Column(Integer, primary_key=True)
+    transcript = db.Column(db.Text)
+    date = db.Column(db.Integer, primary_key=True)
 
 
 if __name__ == '__main__':
-    engine = create_engine('mysql://gregoria:moomie11@gregoria.mysql.pythonanywhere-services.com/gregoria$foxtrot')
-    Base.metadata.create_all(engine)
+    pass
