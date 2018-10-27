@@ -4,7 +4,7 @@ from exceptions import NonexistentComicException, NotImplementedException
 from flask import jsonify, request, Response
 from flask_cors import CORS
 from storage import ComicManager
-import app
+from app import app
 
 
 CORS(app)
