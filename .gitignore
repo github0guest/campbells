@@ -1,0 +1,12 @@
+/sandbox/
+/campbells.iml
+/__pycache__/
+*.pyc
+/*.db
+/flask_run.sh
+/templates/
+/myvenv/
+/static/
+/test_alchemy.py
+/config.py
+/css
