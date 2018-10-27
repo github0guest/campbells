@@ -1,6 +1,5 @@
 from flask import Flask
-
-database = 'sqlite:///foxtrot.db'
+from config import database
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = database
