@@ -1,5 +1,4 @@
 import logging
-from flask_sqlalchemy import SQLAlchemy
 from exceptions import NonexistentComicException, NotImplementedException
 from flask import jsonify, request, Response
 from flask_cors import CORS
@@ -26,17 +25,33 @@ def handle_http_error(error):
 @app.route('/json/search/', methods=['POST'])
 def search():
     content = request.get_json(force=True)
+
+    try:
+        current_page = content['current_page']
+    except KeyError as err:
+        logging.exception(err)
+        current_page = 1
+
+    try:
+        search_term = content['text'].strip()
+    except KeyError as err:
+        logging.exception(err)
+        raise HTTPError(400)
+    output = {'current_page': current_page, 'comics': []}
+    if search_term == "":
+        return jsonify(output)
+
     cm = ComicManager()
     try:
-        dates = cm.search_transcripts(content['text'])
+        dates = cm.search_transcripts(search_term, current_page)
     except NotImplementedException as ex:
         logging.exception(ex)
         raise HTTPError(501)
-    output = []
+
     for date in dates:
         filename = date.strftime('%Y-%m-%d')
         display_name = date.strftime('%A, %B %d, %Y')
-        output.append({'filename': filename, "display_name": display_name})
+        output['comics'].append({'filename': filename, "display_name": display_name})
     return jsonify(output)
 
 

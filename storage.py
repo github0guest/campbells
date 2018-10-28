@@ -35,17 +35,17 @@ class ComicManager:
         return comic.transcript
 
     @staticmethod
-    def search_transcripts(search_term):
+    def search_transcripts(search_term, current_page=1):
         """Searches comic transcripts and returns the dates for matching comics"""
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
             results = SearchTranscripts.query.filter(db.text('transcript MATCH :search_term')).params(
-                search_term=search_term).all()
+                search_term=search_term).paginate(page=current_page, per_page=10, error_out=False)
         elif app.config['SQLALCHEMY_DATABASE_URI'].startswith('mysql'):
             results = Comic.query.filter(db.text('MATCH(transcript) AGAINST(:search_term)')).params(
-                search_term=search_term).all()
+                search_term=search_term).paginate(page=current_page, per_page=10, error_out=False)
         else:
             raise NotImplementedException
-        return [datetime.utcfromtimestamp(result.date).date() for result in results]
+        return [datetime.utcfromtimestamp(result.date).date() for result in results.items]
 
     def get_next_comic(self, date):
         """Returns next chronological comic for given date"""
