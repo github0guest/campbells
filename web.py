@@ -27,23 +27,23 @@ def search():
     content = request.get_json(force=True)
 
     try:
-        current_page = content['current_page']
+        page = content['target_page']
     except KeyError as err:
         logging.exception(err)
-        current_page = 1
+        page = 1
 
     try:
         search_term = content['text'].strip()
     except KeyError as err:
         logging.exception(err)
         raise HTTPError(400)
-    output = {'current_page': current_page, 'comics': []}
+    output = {'current_page': page, 'comics': []}
     if search_term == "":
         return jsonify(output)
 
     cm = ComicManager()
     try:
-        dates = cm.search_transcripts(search_term, current_page)
+        dates = cm.search_transcripts(search_term, page)
     except NotImplementedException as ex:
         logging.exception(ex)
         raise HTTPError(501)
