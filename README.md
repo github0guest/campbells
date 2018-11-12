@@ -1,4 +1,4 @@
-#Campbells
+# Campbells
 Transcript search for the [Foxtrot comic strip](https://en.wikipedia.org/wiki/FoxTrot).
 Campbells is named after the web scraper [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) which started it all.
 
